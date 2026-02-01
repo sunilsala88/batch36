@@ -29,3 +29,20 @@ print(l2)
 #pop
 l2.pop(0)
 print(l2)
+
+#del
+del l2[1]
+print(l2)
+
+print(l1+l2)
+l1.extend(l2)
+print(l1)
+
+#tuple
+p1=(22,33,44,55)
+print(p1)
+print(p1.index(22))
+
+#indexing and slicing
+print(p1[0])
+print(p1[0:3])
