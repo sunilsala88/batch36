@@ -10,11 +10,22 @@ print(l2[-1])
 
 #slicing
 print(l2[0:2])
-
+print(l2)
 #append
 l2.append('nifty')
+
+#insert
+l2.insert(1,700)
 print(l2)
 
 s1='jpmorgan'
 s1=s1.replace('j','s')
 print(s1)
+
+#remove
+l2.remove(7.7)
+print(l2)
+
+#pop
+l2.pop(0)
+print(l2)
