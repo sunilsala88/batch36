@@ -43,3 +43,16 @@ rev_list=[]
 for i in l:
     rev_list.append(l2[i])
 print(rev_list)
+
+new=[]
+index1=len(l2)
+while True:
+    index1=index1-1
+    new.append(l2[index1])
+    if index1==0:
+        break
+print(new)
+
+#5 element
+#4,3,2,1,0
+#-1,-2,-3,-4,-5
