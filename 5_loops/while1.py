@@ -36,4 +36,10 @@ while True:
     num2=current
 print(fib)
 
-l2=[22,33,44,55,66]
+l2=[22,33,44,55,66,77,88]
+l=list(range(len(l2)-1,-1,-1))
+print(l)
+rev_list=[]
+for i in l:
+    rev_list.append(l2[i])
+print(rev_list)
