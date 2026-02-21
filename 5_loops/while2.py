@@ -10,6 +10,11 @@ while True:
     name=input('enter the name of stock you want to buy (press q to quit)')
     if name.lower()=='q':
         break
+    
+    if name=='tsla':
+        print('cannot trade this stock')
+        continue
+
 
     found=stock_prices.get(name)
     if found:
