@@ -78,3 +78,34 @@ def outer():
     print("Outer function executed.")
 
 outer()
+
+def get_fib(number:int)->list:
+
+    fib=[0,1]
+    num1=fib[0]
+    num2=fib[1]
+
+
+    for i in range(number-2):
+        num3=num1+num2
+        fib.append(num3)
+        num1=num2
+        num2=num3
+    return fib
+
+
+l=get_fib(10)
+
+print(l)
+
+#rev_string
+def rev_string(word:str)->str:
+
+    l=len(word)
+    final=""
+    for i in range(-1,-(l+1),-1):
+        final=final+word[i]
+    return final
+
+r=rev_string('hello')
+print(r)
