@@ -53,4 +53,28 @@ def intro(stock_name='sp500',stock_price=5000):
 
 intro()
 intro('amzn')
-intro('amzn',1000)
+intro('tsla',1000)
+
+
+
+
+def sum_numbers(*yy):
+    print(yy)
+    return sum(yy)
+
+a=sum_numbers(1,2,4,5)
+print(a)
+
+def print_details(**kwargs):
+    for key, value in kwargs.items():
+        print(f"{key}: {value}")
+
+print_details(name="Anil", age=30, country="India")
+
+def outer():
+    def inner():
+        print("Inner function executed.")
+    inner()
+    print("Outer function executed.")
+
+outer()
