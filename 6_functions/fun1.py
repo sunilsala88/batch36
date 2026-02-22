@@ -7,6 +7,11 @@
 
 
 def find_highest(list1:list)->int:
+    """
+    this function findes the highest value in a list
+    input: list of numbers
+    output: highest number in the list
+    """
 
     high=list1[0]
     for i in list1:
