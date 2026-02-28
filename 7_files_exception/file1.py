@@ -21,7 +21,7 @@
 #     f1.write('lets learn algo trading')
 
 
-with open(r'/Users/algo trading 2026/batch36/7_files_exception/test1.txt','r') as f1:
+with open(r'/Users/algo trading 2026/batch36/portfolio.txt','r') as f1:
     d=f1.read()
     print(d)
 

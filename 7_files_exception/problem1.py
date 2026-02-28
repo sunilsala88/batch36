@@ -27,9 +27,13 @@ def create_portfolio(stock_prices:dict)->dict:
     return portfolio
 
 def write_to_file(portfolio:dict)->None:
+    total=0
     with open('portfolio.txt','a') as f1:
         for i,j in portfolio.items():
             f1.write(f"{i}: {j} \n")
+            total=total+j
+        f1.write(f'total:{total} \n')
+        f1.write('\n---------------\n')
 
 
 stock_prices={'tsla':900,'amzn':800,'nifty':1000,'goog':789,'ongc':656}
