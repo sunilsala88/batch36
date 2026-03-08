@@ -48,12 +48,29 @@ class Broker:
                 print(i,j)
     
     def buy(self,stock_name):
-        pass
+        found=Broker.stock_prices.get(stock_name)
+        if found:
+            if found>self.wallet:
+                self.portfolio.update({stock_name:found})
+                self.wallet=self.wallet-found
+            else:
+                print('you dont have enough money to buy this stock')
+        
+        else:
+            print('this stock name does not exist')
 
     def sell(self,stock_name):
-        pass
+        found=self.portfolio.get(stock_name)
+        if found:
+           
+                self.portfolio.pop(stock_name)
+                self.wallet=self.wallet+found
 
-trader1=Broker('sanjay',10_000)
+        
+        else:
+            print('this stock name does not exist in portfolio')
+
+trader1=Broker('sanjay',1000)
 trader1.buy('tsla')
 trader1.buy('amzn')
 trader1.portfolio()
