@@ -11,3 +11,8 @@ ar2=np.ones(10,dtype=int)
 print(ar2)
 ar3=np.arange(100,200)
 print(ar3)
+
+a=[[1,2,3],[4,5,6],[7,8,9]]
+print(a)
+np1=np.array(a)
+print(np1)
