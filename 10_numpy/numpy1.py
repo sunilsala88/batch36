@@ -16,3 +16,7 @@ a=[[1,2,3],[4,5,6],[7,8,9]]
 print(a)
 np1=np.array(a)
 print(np1)
+print(np1[1,1])
+np2=np.arange(25,50).reshape(5,5)
+print(np2)
+print(np2[4,3])
