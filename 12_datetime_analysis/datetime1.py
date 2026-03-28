@@ -23,10 +23,16 @@ a=dt1.weekday() # 0-6 (0 is Monday, 6 is Sunday)
 print(a)
 
 
-# start=dt.datetime(2024,1,1)
-# list1=[start]
-# for i in range(365):
-#     start=start + dt.timedelta(days=1)
-#     list1.append(start)
+start=dt.datetime(2026,1,1)
+thursdays=[]
+list1=[start]
+for i in range(365):
+    start=start + dt.timedelta(days=1)
+    list1.append(start)
+    if start.weekday()==3:
+        thursdays.append(start)
 
 # print(list1)
+# print(thursdays)
+print(dt.datetime.now())
+
