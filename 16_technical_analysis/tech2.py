@@ -248,8 +248,8 @@ def atr(
     return result
 
 
-at1 = atr(data['High'], data['Low'], data['Close'], length=14)
-print(at1)
+# at1 = atr(data['High'], data['Low'], data['Close'], length=14)
+# print(at1)
 
 
 
@@ -259,18 +259,184 @@ print(at1)
 
 
 
-#supertrend
-import pandas_ta as ta
+# supertrend
 
-sup1=ta.supertrend(data['High'], data['Low'], data['Close'], length=7, multiplier=3)
+def supertrend(
+    high: Series,
+    low: Series,
+    close: Series,
+    length: int = None,
+    atr_length: int = None,
+    multiplier: float = None,
+    atr_mamode: str = None,
+    offset: int = None,
+    **kwargs
+) -> DataFrame:
+    """Supertrend (no pandas_ta dependency)"""
+    # Defaults / validation
+    length = int(length) if isinstance(length, int) and length > 0 else 7
+    atr_length = int(atr_length) if isinstance(atr_length, int) and atr_length > 0 else length
+    multiplier = float(multiplier) if multiplier is not None and float(multiplier) > 0 else 3.0
+    atr_mamode = atr_mamode.lower() if isinstance(atr_mamode, str) else "rma"
+    offset = int(offset) if isinstance(offset, int) else 0
+
+    if high is None or low is None or close is None:
+        return None
+    if len(close) < length + 1:
+        return None
+
+    # HL2 midpoint and ATR bands
+    hl2_ = (high + low) / 2
+    matr = multiplier * atr(high, low, close, length=atr_length, mamode=atr_mamode)
+    lb = hl2_ - matr   # lower band (support in uptrend)
+    ub = hl2_ + matr   # upper band (resistance in downtrend)
+
+    m = len(close)
+    dir_ = [1] * m
+    trend = [np.nan] * m
+    long = [np.nan] * m
+    short = [np.nan] * m
+
+    lb_arr = lb.to_numpy(dtype=float).copy()
+    ub_arr = ub.to_numpy(dtype=float).copy()
+    close_arr = close.to_numpy(dtype=float)
+
+    for i in range(1, m):
+        if close_arr[i] > ub_arr[i - 1]:
+            dir_[i] = 1
+        elif close_arr[i] < lb_arr[i - 1]:
+            dir_[i] = -1
+        else:
+            dir_[i] = dir_[i - 1]
+            if dir_[i] > 0 and lb_arr[i] < lb_arr[i - 1]:
+                lb_arr[i] = lb_arr[i - 1]
+            if dir_[i] < 0 and ub_arr[i] > ub_arr[i - 1]:
+                ub_arr[i] = ub_arr[i - 1]
+
+        if dir_[i] > 0:
+            trend[i] = long[i] = lb_arr[i]
+        else:
+            trend[i] = short[i] = ub_arr[i]
+
+    # Mask warm-up period
+    dir_[:length] = [np.nan] * length
+
+    _props = f"_{length}_{multiplier}"
+    df = DataFrame(
+        {
+            f"SUPERT{_props}": trend,
+            f"SUPERTd{_props}": dir_,
+            f"SUPERTl{_props}": long,
+            f"SUPERTs{_props}": short,
+        },
+        index=close.index,
+    )
+    df.name = f"SUPERT{_props}"
+
+    # Offset
+    if offset != 0:
+        df = df.shift(offset)
+
+    # Fill
+    if "fillna" in kwargs:
+        df = df.fillna(kwargs["fillna"])
+
+    return df
+
+
+sup1 = supertrend(data['High'], data['Low'], data['Close'], length=7, multiplier=3)
 print(sup1)
 
 
 
-mpf.plot(data, type='candle', style='yahoo',
-         title='TSLA 5m', ylabel='Price ($)',
-         addplot=[
-             mpf.make_addplot(sup1['SUPERTl_7_3'], color='blue'),
-             mpf.make_addplot(sup1['SUPERTs_7_3'], color='black'),
+# mpf.plot(data, type='candle', style='yahoo',
+#          title='TSLA 5m', ylabel='Price ($)',
+#          addplot=[
+#              mpf.make_addplot(sup1['SUPERTl_7_3.0'], color='blue'),
+#              mpf.make_addplot(sup1['SUPERTs_7_3.0'], color='black'),
         
-         ])
+#          ])
+
+
+# macd
+
+def macd(
+    close: Series,
+    fast: int = None,
+    slow: int = None,
+    signal: int = None,
+    offset: int = None,
+    **kwargs
+) -> DataFrame:
+    """Moving Average Convergence Divergence (no pandas_ta dependency)"""
+    # Defaults / validation
+    fast = int(fast) if isinstance(fast, int) and fast > 0 else 12
+    slow = int(slow) if isinstance(slow, int) and slow > 0 else 26
+    signal = int(signal) if isinstance(signal, int) and signal > 0 else 9
+    if slow < fast:
+        fast, slow = slow, fast
+    offset = int(offset) if isinstance(offset, int) else 0
+    as_mode = kwargs.get("asmode", False)
+
+    if close is None or len(close) < slow + signal - 1:
+        return None
+
+    def _ema(series, length):
+        return series.ewm(span=length, adjust=False).mean()
+
+    # Fast and slow EMAs
+    fastma = _ema(close, fast)
+    slowma = _ema(close, slow)
+
+    macd_line = fastma - slowma
+
+    # Signal EMA computed from first valid MACD value onward
+    fvi = macd_line.first_valid_index()
+    macd_fvi = macd_line.loc[fvi:]
+    signalma = _ema(macd_fvi, signal).reindex(macd_line.index)
+    histogram = macd_line - signalma
+
+    # AS mode: re-smooth the adjusted MACD
+    if as_mode:
+        macd_line = macd_line - signalma
+        fvi = macd_line.first_valid_index()
+        macd_fvi = macd_line.loc[fvi:]
+        signalma = _ema(macd_fvi, signal).reindex(macd_line.index)
+        histogram = macd_line - signalma
+
+    # Offset
+    if offset != 0:
+        macd_line = macd_line.shift(offset)
+        histogram = histogram.shift(offset)
+        signalma = signalma.shift(offset)
+
+    # Fill
+    if "fillna" in kwargs:
+        macd_line = macd_line.fillna(kwargs["fillna"])
+        histogram = histogram.fillna(kwargs["fillna"])
+        signalma = signalma.fillna(kwargs["fillna"])
+
+    _asmode = "AS" if as_mode else ""
+    _props = f"_{fast}_{slow}_{signal}"
+    macd_line.name = f"MACD{_asmode}{_props}"
+    histogram.name = f"MACD{_asmode}h{_props}"
+    signalma.name = f"MACD{_asmode}s{_props}"
+
+    df = DataFrame(
+        {macd_line.name: macd_line, histogram.name: histogram, signalma.name: signalma},
+        index=close.index,
+    )
+    df.name = f"MACD{_asmode}{_props}"
+    return df
+
+
+m1 = macd(data['Close'], fast=12, slow=26, signal=9)
+print(m1)
+
+mpf.plot(data, type='candle', style='yahoo',
+            title='TSLA 5m', ylabel='Price ($)',
+            addplot=[
+                mpf.make_addplot(m1['MACD_12_26_9'], panel=1, color='blue', ylabel='MACD'),
+                mpf.make_addplot(m1['MACDh_12_26_9'], panel=1, color='red', type='bar', ylabel='Histogram'),
+                mpf.make_addplot(m1['MACDs_12_26_9'], panel=1, color='black', ylabel='Signal')
+            ])
