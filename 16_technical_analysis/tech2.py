@@ -158,15 +158,105 @@ def rsi(
     return result
 
 
-r = rsi(data['Close'], length=14)
-print(r)
+# r = rsi(data['Close'], length=14)
+# print(r)
 
+
+
+
+# mpf.plot(data, type='candle', style='yahoo',
+#          title='TSLA 5m', ylabel='Price ($)',
+#             addplot=[mpf.make_addplot(r, panel=1, color='purple', ylabel='RSI')])
+
+# atr
+
+def atr(
+    high: Series,
+    low: Series,
+    close: Series,
+    length: int = None,
+    mamode: str = None,
+    drift: int = None,
+    offset: int = None,
+    **kwargs
+) -> Series:
+    """Average True Range (no pandas_ta dependency)"""
+    # Defaults / validation
+    length = int(length) if isinstance(length, int) and length > 0 else 14
+    mamode = mamode.lower() if isinstance(mamode, str) else "rma"
+    drift = int(drift) if isinstance(drift, int) and drift > 0 else 1
+    offset = int(offset) if isinstance(offset, int) else 0
+
+    if high is None or low is None or close is None:
+        return None
+    if len(close) < length + 1:
+        return None
+
+    # True Range: max of three measures
+    prev_close = close.shift(drift)
+    tr = (
+        (high - low).abs()
+        .combine((high - prev_close).abs(), max)
+        .combine((low - prev_close).abs(), max)
+    )
+
+    # Seed with SMA of first `length` TRs, then apply Wilder's smoothing (rma)
+    percent = kwargs.pop("percent", False)
+
+    def _smooth(series):
+        if mamode == "ema":
+            return series.ewm(span=length, adjust=False).mean()
+        elif mamode == "sma":
+            return series.rolling(window=length).mean()
+        else:  # rma — Wilder's smoothing (default)
+            alpha = 1.0 / length
+            # Seed first value with SMA
+            result = series.copy().astype(float)
+            first_valid = series.first_valid_index()
+            if first_valid is None:
+                return series
+            iloc_start = series.index.get_loc(first_valid)
+            seed_end = iloc_start + length
+            if seed_end > len(series):
+                return series.rolling(window=length).mean()
+            seed = series.iloc[iloc_start:seed_end].mean()
+            values = series.to_numpy(dtype=float)
+            out = np.full(len(values), np.nan)
+            out[seed_end - 1] = seed
+            for i in range(seed_end, len(values)):
+                out[i] = alpha * values[i] + (1 - alpha) * out[i - 1]
+            result[:] = out
+            return result
+
+    result = _smooth(tr)
+
+    if np.all(np.isnan(result)):
+        return None
+
+    if percent:
+        result = result * 100 / close
+
+    # Offset
+    if offset != 0:
+        result = result.shift(offset)
+
+    # Fill
+    if "fillna" in kwargs:
+        result = result.fillna(kwargs["fillna"])
+
+    result.name = f"ATR{mamode[0]}{'p' if percent else ''}_{length}"
+    return result
+
+
+at1 = atr(data['High'], data['Low'], data['Close'], length=14)
+print(at1)
 
 
 
 mpf.plot(data, type='candle', style='yahoo',
          title='TSLA 5m', ylabel='Price ($)',
-            addplot=[mpf.make_addplot(r, panel=1, color='purple', ylabel='RSI')])
+            addplot=[mpf.make_addplot(at1, panel=1, color='green', ylabel='ATR')])
 
-#atr
-#adx
+
+
+#supertrend
