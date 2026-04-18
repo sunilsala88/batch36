@@ -253,10 +253,24 @@ print(at1)
 
 
 
-mpf.plot(data, type='candle', style='yahoo',
-         title='TSLA 5m', ylabel='Price ($)',
-            addplot=[mpf.make_addplot(at1, panel=1, color='green', ylabel='ATR')])
+# mpf.plot(data, type='candle', style='yahoo',
+#          title='TSLA 5m', ylabel='Price ($)',
+#             addplot=[mpf.make_addplot(at1, panel=1, color='green', ylabel='ATR')])
 
 
 
 #supertrend
+import pandas_ta as ta
+
+sup1=ta.supertrend(data['High'], data['Low'], data['Close'], length=7, multiplier=3)
+print(sup1)
+
+
+
+mpf.plot(data, type='candle', style='yahoo',
+         title='TSLA 5m', ylabel='Price ($)',
+         addplot=[
+             mpf.make_addplot(sup1['SUPERTl_7_3'], color='blue'),
+             mpf.make_addplot(sup1['SUPERTs_7_3'], color='black'),
+        
+         ])
